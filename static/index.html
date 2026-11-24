@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Household Spend</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Login -->
+  <section id="login-view" class="view centered" hidden>
+    <h1>Household Spend</h1>
+    <form id="login-form" class="card">
+      <label for="password">Household password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button type="submit" class="primary">Log in</button>
+      <p id="login-error" class="error" hidden></p>
+    </form>
+  </section>
+
+  <!-- App -->
+  <div id="app-view" hidden>
+    <header class="topbar">
+      <h1>Household Spend</h1>
+      <input id="month" type="month" aria-label="Month">
+    </header>
+
+    <main>
+      <!-- Scan -->
+      <section id="tab-scan" class="view">
+        <div id="scan-start" class="card">
+          <h2>Add a receipt</h2>
+          <p class="muted">Take a photo of the whole receipt on a flat surface, in good light.</p>
+          <label class="primary big-button">
+            📷 Scan receipt
+            <input id="photo" type="file" accept="image/*" capture="environment" hidden>
+          </label>
+          <label class="secondary big-button">
+            🖼️ Choose from gallery
+            <input id="photo-gallery" type="file" accept="image/*" hidden>
+          </label>
+        </div>
+
+        <div id="scan-loading" class="card centered" hidden>
+          <div class="spinner"></div>
+          <p>Reading receipt…</p>
+        </div>
+
+        <form id="review" class="card" hidden>
+          <h2>Check the receipt</h2>
+          <p id="duplicate-warning" class="warning" hidden></p>
+          <p id="missing-warning" class="warning" hidden></p>
+          <div class="grid-2">
+            <label>Store <input id="r-store" list="store-list" required></label>
+            <label>Date <input id="r-date" type="date" required></label>
+            <label>Total (€) <input id="r-total" type="number" step="0.01" inputmode="decimal" required></label>
+            <label>Paid by <select id="r-paid-by"></select></label>
+          </div>
+          <p id="sum-check" class="muted"></p>
+          <ul id="r-items" class="items"></ul>
+          <button type="button" id="add-item" class="secondary">+ Add line</button>
+          <div class="actions">
+            <button type="button" id="cancel-review" class="secondary">Cancel</button>
+            <button type="submit" class="primary">Save receipt</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Receipts -->
+      <section id="tab-receipts" class="view" hidden>
+        <ul id="receipt-list" class="receipt-list"></ul>
+        <p id="no-receipts" class="muted centered" hidden>No receipts this month yet.</p>
+      </section>
+
+      <!-- Summary -->
+      <section id="tab-summary" class="view" hidden>
+        <div class="stats">
+          <div class="stat"><span>Total</span><strong id="s-total">€0.00</strong></div>
+          <div class="stat"><span>Receipts</span><strong id="s-count">0</strong></div>
+          <div class="stat"><span>6-month avg</span><strong id="s-avg">€0.00</strong></div>
+        </div>
+        <div class="card"><h2>By person</h2><ul id="s-person" class="bars"></ul></div>
+        <div class="card"><h2>By store</h2><ul id="s-store" class="bars"></ul></div>
+        <div class="card"><h2>By category</h2><ul id="s-category" class="bars"></ul></div>
+        <div class="card"><h2>Top products</h2><ul id="s-products" class="bars"></ul></div>
+        <div class="card"><h2>Monthly</h2><ul id="s-monthly" class="bars"></ul></div>
+      </section>
+    </main>
+
+    <nav class="tabbar">
+      <button data-tab="scan" class="active">📷<span>Scan</span></button>
+      <button data-tab="receipts">🧾<span>Receipts</span></button>
+      <button data-tab="summary">📊<span>Summary</span></button>
+    </nav>
+  </div>
+
+  <datalist id="store-list"></datalist>
+  <datalist id="product-list"></datalist>
+  <div id="toast" class="toast" hidden></div>
+
+  <template id="item-template">
+    <li class="item">
+      <div class="item-head">
+        <span class="raw"></span>
+        <span class="badge"></span>
+        <button type="button" class="remove" aria-label="Remove line">✕</button>
+      </div>
+      <input class="product" list="product-list" placeholder="Product name">
+      <div class="item-row">
+        <select class="category"></select>
+        <input class="amount" type="number" step="0.01" inputmode="decimal" aria-label="Amount">
+      </div>
+    </li>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
