@@ -3,68 +3,95 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#121518">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Spend">
   <title>Household Spend</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  <!-- SVG icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9l1-5h14l1 5M4 9h16v11H4zM9 20v-6h6v6"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6 7-6s7 2 7 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c3 0 5 2 5 5"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2 11h11l2-8H6"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></symbol>
+    <symbol id="i-euro" viewBox="0 0 24 24"><path d="M18 6a7 7 0 1 0 0 12M4 10h9M4 14h9"/></symbol>
+    <symbol id="i-avg" viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 8h6v6"/></symbol>
+  </svg>
+
   <!-- Login -->
-  <section id="login-view" class="view centered" hidden>
-    <h1>Household Spend</h1>
-    <form id="login-form" class="card">
-      <label for="password">Household password</label>
-      <input id="password" type="password" autocomplete="current-password" required>
-      <button type="submit" class="primary">Log in</button>
-      <p id="login-error" class="error" hidden></p>
-    </form>
+  <section id="login-view" class="login" hidden>
+    <div class="login-card widget">
+      <div class="logo"><svg><use href="#i-receipt"/></svg></div>
+      <h1>Household Spend</h1>
+      <p class="muted">Enter the household password</p>
+      <form id="login-form">
+        <input id="password" type="password" autocomplete="current-password" placeholder="Password" required>
+        <button type="submit" class="btn primary">Log in</button>
+        <p id="login-error" class="error" hidden></p>
+      </form>
+    </div>
   </section>
 
   <!-- App -->
   <div id="app-view" hidden>
     <header class="topbar">
-      <h1>Household Spend</h1>
-      <input id="month" type="month" aria-label="Month">
+      <div class="brand">
+        <span class="dot"></span>
+        <span>Household Spend</span>
+      </div>
+      <input id="month" type="month" aria-label="Month" class="pill">
     </header>
 
     <main>
       <!-- Scan -->
       <section id="tab-scan" class="view">
-        <div id="scan-start" class="card">
-          <h2>Add a receipt</h2>
-          <p class="muted">Take a photo of the whole receipt on a flat surface, in good light.</p>
-          <label class="primary big-button">
-            📷 Scan receipt
-            <input id="photo" type="file" accept="image/*" capture="environment" hidden>
-          </label>
-          <label class="secondary big-button">
-            🖼️ Choose from gallery
+        <div id="scan-start" class="grid">
+          <div class="widget span-2 hero">
+            <div class="w-label"><svg><use href="#i-camera"/></svg>New receipt</div>
+            <p class="muted">Lay the whole receipt flat, in good light, with the total and date in the photo.</p>
+            <label class="scan-button">
+              <span class="ring"><svg><use href="#i-camera"/></svg></span>
+              <span>Scan receipt</span>
+              <input id="photo" type="file" accept="image/*" capture="environment" hidden>
+            </label>
+          </div>
+          <label class="widget span-2 tile-button">
+            <svg><use href="#i-image"/></svg>
+            <span>Choose from gallery</span>
             <input id="photo-gallery" type="file" accept="image/*" hidden>
           </label>
         </div>
 
-        <div id="scan-loading" class="card centered" hidden>
+        <div id="scan-loading" class="widget loading" hidden>
           <div class="spinner"></div>
           <p>Reading receipt…</p>
         </div>
 
-        <form id="review" class="card" hidden>
-          <h2>Check the receipt</h2>
-          <p id="duplicate-warning" class="warning" hidden></p>
-          <p id="missing-warning" class="warning" hidden></p>
-          <div class="grid-2">
-            <label>Store <input id="r-store" list="store-list" required></label>
-            <label>Date <input id="r-date" type="date" required></label>
-            <label>Total (€) <input id="r-total" type="number" step="0.01" inputmode="decimal" required></label>
-            <label>Paid by <select id="r-paid-by"></select></label>
+        <form id="review" hidden>
+          <div class="widget">
+            <div class="w-label"><svg><use href="#i-receipt"/></svg>Check the receipt</div>
+            <p id="duplicate-warning" class="warning" hidden></p>
+            <p id="missing-warning" class="warning" hidden></p>
+            <div class="fields">
+              <label>Store <input id="r-store" list="store-list" required></label>
+              <label>Date <input id="r-date" type="date" required></label>
+              <label>Total (€) <input id="r-total" type="number" step="0.01" inputmode="decimal" required></label>
+              <label>Paid by <select id="r-paid-by"></select></label>
+            </div>
+            <p id="sum-check" class="muted"></p>
           </div>
-          <p id="sum-check" class="muted"></p>
           <ul id="r-items" class="items"></ul>
-          <button type="button" id="add-item" class="secondary">+ Add line</button>
+          <button type="button" id="add-item" class="btn ghost">+ Add line</button>
           <div class="actions">
-            <button type="button" id="cancel-review" class="secondary">Cancel</button>
-            <button type="submit" class="primary">Save receipt</button>
+            <button type="button" id="cancel-review" class="btn ghost">Cancel</button>
+            <button type="submit" class="btn primary">Save receipt</button>
           </div>
         </form>
       </section>
@@ -72,28 +99,54 @@
       <!-- Receipts -->
       <section id="tab-receipts" class="view" hidden>
         <ul id="receipt-list" class="receipt-list"></ul>
-        <p id="no-receipts" class="muted centered" hidden>No receipts this month yet.</p>
+        <p id="no-receipts" class="muted empty" hidden>No receipts this month yet.</p>
       </section>
 
-      <!-- Summary -->
+      <!-- Summary: widget grid (2 columns on phone, 4 in landscape / desktop) -->
       <section id="tab-summary" class="view" hidden>
-        <div class="stats">
-          <div class="stat"><span>Total</span><strong id="s-total">€0.00</strong></div>
-          <div class="stat"><span>Receipts</span><strong id="s-count">0</strong></div>
-          <div class="stat"><span>6-month avg</span><strong id="s-avg">€0.00</strong></div>
+        <div class="grid">
+          <div class="widget span-2 wide-3 accent-teal">
+            <div class="w-label"><svg><use href="#i-euro"/></svg>Spent this month</div>
+            <div class="big" id="s-total">€0.00</div>
+            <div class="w-sub"><span id="s-diff" class="chip"></span><span class="muted">vs 6-month average</span></div>
+            <div id="s-monthly" class="columns"></div>
+          </div>
+          <div class="stack">
+          <div class="widget accent-violet">
+            <div class="w-label"><svg><use href="#i-receipt"/></svg>Receipts</div>
+            <div class="mid" id="s-count">0</div>
+            <div class="muted small" id="s-per-receipt"></div>
+          </div>
+          <div class="widget accent-amber">
+            <div class="w-label"><svg><use href="#i-avg"/></svg>6-month avg</div>
+            <div class="mid" id="s-avg">€0.00</div>
+            <div class="muted small">per month</div>
+          </div>
+          </div>
+          <div class="widget span-2">
+            <div class="w-label"><svg><use href="#i-users"/></svg>By person</div>
+            <div id="s-person" class="split"></div>
+          </div>
+          <div class="widget span-2">
+            <div class="w-label"><svg><use href="#i-store"/></svg>By store</div>
+            <ul id="s-store" class="bars"></ul>
+          </div>
+          <div class="widget span-2">
+            <div class="w-label"><svg><use href="#i-tag"/></svg>By category</div>
+            <ul id="s-category" class="bars"></ul>
+          </div>
+          <div class="widget span-2">
+            <div class="w-label"><svg><use href="#i-cart"/></svg>Top products</div>
+            <ul id="s-products" class="bars"></ul>
+          </div>
         </div>
-        <div class="card"><h2>By person</h2><ul id="s-person" class="bars"></ul></div>
-        <div class="card"><h2>By store</h2><ul id="s-store" class="bars"></ul></div>
-        <div class="card"><h2>By category</h2><ul id="s-category" class="bars"></ul></div>
-        <div class="card"><h2>Top products</h2><ul id="s-products" class="bars"></ul></div>
-        <div class="card"><h2>Monthly</h2><ul id="s-monthly" class="bars"></ul></div>
       </section>
     </main>
 
     <nav class="tabbar">
-      <button data-tab="scan" class="active">📷<span>Scan</span></button>
-      <button data-tab="receipts">🧾<span>Receipts</span></button>
-      <button data-tab="summary">📊<span>Summary</span></button>
+      <button data-tab="scan" class="active"><svg><use href="#i-camera"/></svg><span>Scan</span></button>
+      <button data-tab="receipts"><svg><use href="#i-receipt"/></svg><span>Receipts</span></button>
+      <button data-tab="summary"><svg><use href="#i-chart"/></svg><span>Summary</span></button>
     </nav>
   </div>
 
@@ -102,7 +155,7 @@
   <div id="toast" class="toast" hidden></div>
 
   <template id="item-template">
-    <li class="item">
+    <li class="item widget">
       <div class="item-head">
         <span class="raw"></span>
         <span class="badge"></span>

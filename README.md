@@ -14,6 +14,10 @@ single catalogue product.
 |---|---|---|
 | ![Review](docs/review.png) | ![Receipts](docs/receipts.png) | ![Summary](docs/summary.png) |
 
+The summary is a widget grid that switches to 4 columns in landscape, ready to be reused on a desk-hub screen:
+
+![Landscape dashboard](docs/landscape.png)
+
 ## How it works
 
 ```

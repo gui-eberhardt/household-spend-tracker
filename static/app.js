@@ -253,6 +253,19 @@ $("#review").addEventListener("submit", async (e) => {
 
 // ---------- receipts ----------
 
+const PALETTE = ["#2dd4bf", "#a78bfa", "#fbbf24", "#38bdf8", "#fb7185", "#a3e635", "#f97316", "#e879f9"];
+const STORE_COLORS = {
+  Tesco: "#38bdf8", Lidl: "#fbbf24", Aldi: "#60a5fa", "Dunnes Stores": "#a3e635",
+  SuperValu: "#fb7185", Centra: "#2dd4bf", Spar: "#f87171",
+};
+function colorFor(label) {
+  if (STORE_COLORS[label]) return STORE_COLORS[label];
+  let h = 0;
+  for (const ch of String(label)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+const initials = (name) => String(name).split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+
 async function loadReceipts() {
   const receipts = await api(`/api/receipts?month=${$("#month").value}`);
   $("#no-receipts").hidden = receipts.length > 0;
@@ -261,13 +274,14 @@ async function loadReceipts() {
       (r) => `
       <li><details>
         <summary>
-          <div><strong>${esc(r.store)}</strong><div class="meta">${fmtDate(r.purchased_on)} · ${esc(r.paid_by)}</div></div>
-          <strong>${euro(r.total)}</strong>
+          <span class="store-icon" style="background:${colorFor(r.store)}">${esc(initials(r.store))}</span>
+          <div class="info"><strong>${esc(r.store)}</strong><div class="meta">${fmtDate(r.purchased_on)} · ${esc(r.paid_by)} · ${r.items.length} lines</div></div>
+          <span class="total">${euro(r.total)}</span>
         </summary>
         <table>${r.items
           .map((i) => `<tr><td>${esc(i.product)}<div class="meta">${esc(i.category)}</div></td><td class="num">${euro(i.line_total)}</td></tr>`)
           .join("")}</table>
-        <button class="delete" data-id="${r.id}">Delete receipt</button>
+        <button class="btn delete" data-id="${r.id}">Delete receipt</button>
       </details></li>`
     )
     .join("");
@@ -288,27 +302,76 @@ async function loadReceipts() {
 // ---------- summary ----------
 
 async function loadSummary() {
-  const s = await api(`/api/summary?month=${$("#month").value}`);
+  const month = $("#month").value;
+  const s = await api(`/api/summary?month=${month}`);
   $("#s-total").textContent = euro(s.total);
   $("#s-count").textContent = s.receipts;
+  $("#s-per-receipt").textContent = s.receipts ? `${euro(s.total / s.receipts)} per receipt` : "—";
   $("#s-avg").textContent = euro(s.monthly_average);
-  renderBars("#s-person", s.by_person);
+
+  const diff = $("#s-diff");
+  if (s.monthly_average > 0) {
+    const pct = ((s.total - s.monthly_average) / s.monthly_average) * 100;
+    diff.textContent = `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(0)}%`;
+    diff.className = `chip ${pct > 0.5 ? "up" : pct < -0.5 ? "down" : ""}`;
+  } else {
+    diff.textContent = "—";
+    diff.className = "chip";
+  }
+
+  renderColumns(s.monthly, month);
+  renderSplit("#s-person", s.by_person);
   renderBars("#s-store", s.by_store);
   renderBars("#s-category", s.by_category);
   renderBars("#s-products", s.top_products);
-  renderBars("#s-monthly", s.monthly.map((m) => ({ label: m.month, amount: m.amount })));
+}
+
+// Last 6 months as columns; the selected month is highlighted.
+function renderColumns(monthly, current) {
+  const byMonth = Object.fromEntries(monthly.map((m) => [m.month, Number(m.amount)]));
+  const [y, m] = current.split("-").map(Number);
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(y, m - 1 - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    months.push({ key, label: d.toLocaleDateString("en", { month: "short" }), amount: byMonth[key] || 0 });
+  }
+  const max = Math.max(...months.map((x) => x.amount), 0.01);
+  $("#s-monthly").innerHTML = months
+    .map(
+      (x) => `<div class="col ${x.key === current ? "current" : ""}" title="${x.label}: ${euro(x.amount)}">
+        <div class="bar" style="height:${Math.max((x.amount / max) * 100, 4)}%"></div><span>${x.label}</span></div>`
+    )
+    .join("");
+}
+
+function renderSplit(sel, rows) {
+  const total = rows.reduce((a, r) => a + Number(r.amount), 0);
+  if (!rows.length || total <= 0) {
+    $(sel).innerHTML = `<p class="muted small">No data</p>`;
+    return;
+  }
+  const colors = [ "#2dd4bf", "#a78bfa", "#fbbf24", "#38bdf8" ];
+  $(sel).innerHTML = `
+    <div class="track">${rows.map((r, i) => `<div style="width:${(Number(r.amount) / total) * 100}%;background:${colors[i % colors.length]}"></div>`).join("")}</div>
+    <div class="legend">${rows
+      .map((r, i) => `<span><i style="background:${colors[i % colors.length]}"></i>${esc(r.label)} <b>${euro(r.amount)}</b>
+        <span class="muted">${Math.round((Number(r.amount) / total) * 100)}%</span></span>`)
+      .join("")}</div>`;
 }
 
 function renderBars(sel, rows) {
   const max = Math.max(...rows.map((r) => Math.abs(Number(r.amount))), 0.01);
   $(sel).innerHTML = rows.length
     ? rows
-        .map(
-          (r) => `<li><div class="fill" style="width:${(Math.abs(Number(r.amount)) / max) * 100}%"></div>
-            <span>${esc(r.label)}</span><span>${euro(r.amount)}</span></li>`
-        )
+        .map((r) => {
+          const negative = Number(r.amount) < 0;
+          const color = negative ? "#fb7185" : colorFor(r.label);
+          return `<li><span>${esc(r.label)}</span><span class="amount">${euro(r.amount)}</span>
+            <div class="track"><div class="fill" style="width:${(Math.abs(Number(r.amount)) / max) * 100}%;background:${color}"></div></div></li>`;
+        })
         .join("")
-    : `<li class="muted">No data</li>`;
+    : `<li class="muted small">No data</li>`;
 }
 
 // ---------- helpers ----------
