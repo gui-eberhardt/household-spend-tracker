@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import Path
@@ -19,6 +20,8 @@ from app.schemas import ConfirmReceipt, LoginRequest, ReceiptDraft
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 ALLOWED_IMAGES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
 MONTH_PATTERN = r"^\d{4}-(0[1-9]|1[0-2])$"
+
+logger = logging.getLogger("uvicorn.error")
 
 
 @asynccontextmanager
@@ -95,6 +98,7 @@ async def scan_receipt(
     try:
         extracted = reader.read(data, image.content_type, known)
     except OcrError as exc:
+        logger.warning("Receipt reading failed: %s", exc.__cause__ or exc)
         raise HTTPException(502, str(exc)) from exc
     if not extracted.items:
         raise HTTPException(422, "No items found on this photo")
